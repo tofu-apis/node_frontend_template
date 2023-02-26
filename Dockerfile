@@ -4,7 +4,8 @@
 
 # Set the base image to jadesym/node-ubuntu-docker-base
 # https://hub.docker.com/repository/docker/jadesym/node-ubuntu-docker-base
-FROM jadesym/node-ubuntu-docker-base:latest as base
+# Tag 0.0.2
+FROM tofuapis/node-yarn-ubuntu-docker-base@sha256:8d6f3ca18844f135ffbde572f3c91f7c6231fc8d32ce3b5b55e1b7da177685d0 as base
 
 #----------------------------------------------------------------------
 # Build arguments and environment variables
@@ -18,8 +19,9 @@ ENV NODE_ENV $NODE_ENV
 #----------------------------------------------------------------------
 # Dependencies Installation
 #----------------------------------------------------------------------
-# Confirm Node Installation (use for debugging)
-# RUN node -v && npm -v
+# Confirm Node Installation
+RUN node -v
+RUN yarn --version
 
 # Adding non-interactive for debian front-end to hide dialog questions during build.
 # Args only live during the build so they do not persist to the final image.
@@ -32,9 +34,10 @@ RUN apt-get install -qq -y \
 #----------------------------------------------------------------------
 # User & Directory Setup
 #----------------------------------------------------------------------
-RUN mkdir -p $APP_DIR \
-    && useradd -ms /bin/bash $USER_NAME \
-    && chown -R $USER_NAME:$USER_NAME $DATA_DIR
+RUN mkdir -p $APP_DIR
+
+RUN useradd -ms /bin/bash $USER_NAME
+RUN chown -R $USER_NAME:$USER_NAME $DATA_DIR
 
 USER $USER_NAME
 
@@ -47,16 +50,22 @@ WORKDIR $APP_DIR
 COPY --chown=$USER_NAME:$USER_NAME \
   # Copy NPM RC file for npm configurations
   .npmrc \
+  # Copy Yarn RC YAML file for yarn configurations
+  .yarnrc.yml \
   # Copy dependencies definition files [package(-lock).json] as source of truth for dependencies
-  package-lock.json \
+  yarn.lock \
   package.json \
   # Typescript configuration
   tsconfig.json \
   # To destination directory
   $APP_DIR
 
+# Downloading wait-for for deploying based upon dependency services
+RUN wget https://raw.githubusercontent.com/eficode/wait-for/master/wait-for
+RUN chmod u+rwx $APP_DIR/wait-for
+
 # Install dependencies from package lock (clean install)
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 # Copy source code contents. Directories are treated differently.
 # Copying with multiple source files will copy the contents of the file
@@ -65,6 +74,7 @@ COPY --chown=$USER_NAME:$USER_NAME \
   src $APP_DIR/src
 COPY --chown=$USER_NAME:$USER_NAME \
   public $APP_DIR/public
+
 #----------------------------------------------------------------------
 # Use multi-stage builds to build the environment
 #----------------------------------------------------------------------
@@ -74,9 +84,7 @@ COPY \
   .env* \
   $APP_DIR
 
-RUN echo $NODE_ENV
-RUN echo build:$NODE_ENV
-RUN npm run build:$NODE_ENV
+RUN yarn run build:$NODE_ENV
 
 #----------------------------------------------------------------------
 # Use multi-stage builds to run the linter
@@ -88,7 +96,7 @@ RUN npm run build:$NODE_ENV
 #   .prettierrc \
 #   $APP_DIR
 #
-# CMD ["npm", "run", "lint"]
+# CMD ["yarn", "run", "lint"]
 
 #----------------------------------------------------------------------
 # Use multi-stage builds to have the e2e test image
@@ -102,7 +110,7 @@ RUN npm run build:$NODE_ENV
 #   $APP_DIR
 # COPY test/e2e $APP_DIR/test/e2e
 #
-# CMD ["npm", "run", "test:e2e"]
+# CMD ["yarn", "run", "test:e2e"]
 
 #----------------------------------------------------------------------
 # Use multi-stage builds to have the unit test image
@@ -120,18 +128,15 @@ COPY \
   --from=builder \
   $APP_DIR/src $APP_DIR/src
 
-# Attempting a temporary hack to see if this fixes the COPY failure issue
-# Remove this hack once the below issue with multi-stage build Docker is resolved:
-# https://github.com/moby/moby/issues/37965
-RUN true
-
 # Copying only the test and base environment files.
 COPY \
-  .env $APP_DIR
-COPY \
-  .env.test* $APP_DIR
+  .env \
+  .env.test* \
+  jestconfig.json \
+  # To destination directory
+  $APP_DIR
 
-CMD ["npm", "run", "test:unit"]
+CMD ["yarn", "run", "test:unit"]
 
 #----------------------------------------------------------------------
 # Use multi-stage builds to have the test image
