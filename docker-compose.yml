@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  app:
+    build:
+      args:
+        - NODE_ENV
+      context: .
+      dockerfile: Dockerfile
+      target: app
+    environment:
+      - PORT
+    init: true
+    ports:
+      - "${PORT}:${PORT}"
+    tty: true

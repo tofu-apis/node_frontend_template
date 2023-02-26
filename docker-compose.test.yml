@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  test-unit:
+    build:
+      args:
+        - NODE_ENV
+      context: .
+      dockerfile: Dockerfile
+      target: test-unit
+    environment:
+      NODE_ENV: test

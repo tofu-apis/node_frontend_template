@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# To set up the git hooks to enforce this:
+# git config core.hooksPath .githooks
+
+protected_branch='master'
+current_branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
+
+if [ $protected_branch = $current_branch ]
+	then
+    make precommit NODE_ENV=development
+else
+    exit 0
+fi

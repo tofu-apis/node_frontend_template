@@ -1,0 +1,26 @@
+# Basic workflow for Github Actions
+name: CI
+
+# Triggers the workflow on push or pull request events but only for the master branch
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "tests"
+  tests:
+    name: Run build & tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get current docker(-compose) versions
+        run: docker --version && docker-compose --version
+      - name: Run build of the image
+        run: make build NODE_ENV=development
+      - name: Run build of the unit tests target
+        run: make build-test NODE_ENV=development
+      - name: Run the unit tests
+        run: make test-unit NODE_ENV=development
