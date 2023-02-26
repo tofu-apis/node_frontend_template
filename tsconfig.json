@@ -14,7 +14,8 @@
     "noEmit": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
-    "noUnusedLocals": true,
+    // Relying on lint to handle to allow _ prefix for unused functions exception
+    "noUnusedLocals": false,
     "noUnusedParameters": true,
     "outDir": "dist",
     "resolveJsonModule": true,
@@ -23,6 +24,7 @@
     "sourceMap": true,
     "target": "es5",
     "useDefineForClassFields": true,
+    "noErrorTruncation": true,
     /* Experimental Options */
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -30,5 +32,5 @@
   },
   "compileOnSave": true,
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["node_modules", "build", "test/**/*.test.ts"]
+  "exclude": ["node_modules", "build", "dist", "test/**/*.test.ts"]
 }
