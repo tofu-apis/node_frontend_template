@@ -9,4 +9,4 @@
 git config core.hooksPath .githooks/
 
 # Initialize the dependencies locally
-npm install
+yarn install
