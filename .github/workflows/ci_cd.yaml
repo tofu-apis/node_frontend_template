@@ -24,3 +24,15 @@ jobs:
         run: make build-test NODE_ENV=development
       - name: Run the unit tests
         run: make test-unit NODE_ENV=development
+
+  # Revert commit (only should run on failure of some phase in a CI/CD pipeline)
+  auto-revert-commit:
+    needs: tests
+    runs-on: ubuntu-latest
+    if: always() && (needs.tests.result == 'failure')
+    steps:
+      - name: Automatic Commit Revert
+        uses: 'tofu-apis/revert-commit-action@v0.0.37'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          is-push-enabled: 'true'
