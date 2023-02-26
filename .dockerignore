@@ -2,9 +2,16 @@
 .gitignore
 .git
 .githooks
+.github
 
 # Ignore built dependencies
 node_modules
 
 # Ignore built source code
-build
+dist
+
+# Ignore documentation files
+README.md
+
+# Ignore orchestration files beyond Docker scope
+Makefile
